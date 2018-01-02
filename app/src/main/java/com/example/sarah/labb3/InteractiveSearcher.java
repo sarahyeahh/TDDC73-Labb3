@@ -4,7 +4,7 @@ package com.example.sarah.labb3;
     Malin Wetterskog malwe794
     TDDC73
     Labb 3
- */
+*/
 
 import android.content.Context;
 import android.os.AsyncTask;
@@ -37,8 +37,7 @@ public class InteractiveSearcher extends LinearLayout{
     //Variables
     Context c;
     private EditText editText;
-    public int id = 0;
-    //public String previous;
+    public int id = -1;
     public int previousid = -1;
     LinearLayout listLayout;
     PopupWindow pw;
@@ -47,8 +46,6 @@ public class InteractiveSearcher extends LinearLayout{
     public InteractiveSearcher(Context context) {
         super(context);
         this.c = context;
-        //previous = "";
-        //previousid = -1;
 
         LayoutParams layoutParams = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
         editText = new EditText(context);
@@ -62,13 +59,15 @@ public class InteractiveSearcher extends LinearLayout{
 
         pw = new PopupWindow(scrollView, LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
         pw.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
-        pw.setFocusable(true);
+
+        pw.setFocusable(false);
         pw.setOutsideTouchable(true);
         pw.update();
 
         addView(editText);
         textChange();
     }
+
 
     public InteractiveSearcher(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -100,38 +99,26 @@ public class InteractiveSearcher extends LinearLayout{
 
                 //Get text from input.
                 String searchText = editText.getText().toString().toLowerCase();
-               // previous.toLowerCase();
-               // System.out.println("SEARCHTEXT "  + searchText + " PREVIOUS " + previous);
-                //pw.dismiss();
+                pw.dismiss();
 
-                //If the input field is empty
                 if(searchText.equals("")){
                     //Do nothing
                     pw.dismiss();
                 }
-                //If the input field doesn't contain the same input as previously.
                 else {
-                    //execute url
-                    new GetText().execute("http://getnames-getnames.a3c1.starter-us-west-1.openshiftapps.com/getnames/" + id + "/" + searchText);
-                    //previous = searchText;
-                    System.out.println("ID INNAN " + id);
                     id++;
-                    System.out.println("ID EFTER " + id);
-
+                    //Search
+                    new GetText().execute("http://getnames-getnames.a3c1.starter-us-west-1.openshiftapps.com/getnames/" + id + "/" + searchText);
                 }
-                //If the search is an old search, use the same input and id.
-              /*  else{
-                    new GetText().execute("http://getnames-getnames.a3c1.starter-us-west-1.openshiftapps.com/getnames/" + previousid + "/" + previous);
-                }*/
-
-                System.out.println("CURRENT TEXT IN TEXTFIELD:   " + editText.getText());
             }
         });
     }
 
 
-//Use AsyncTask to get a JSONObject.
+    //Use AsyncTask to get a JSONObject.
     public class GetText extends AsyncTask<String, String, JSONObject>{
+
+        /** progress dialog to show user that the backup is processing. */
 
         @Override
         protected JSONObject doInBackground(String... strings) {
@@ -188,8 +175,6 @@ public class InteractiveSearcher extends LinearLayout{
         protected void onPostExecute(JSONObject jsonObject) {
             super.onPostExecute(jsonObject);
 
-            System.out.println("jsonObject: " + jsonObject);
-
             JSONArray jsonArray = null;
             String jsonString = "";
             ArrayList<String> results = new ArrayList<String>();
@@ -205,13 +190,10 @@ public class InteractiveSearcher extends LinearLayout{
                 //Add all the elements from the JSONArray to an Array of strings.
                 for(int i = 0; i < jsonArray.length(); i++){
                     results.add(jsonArray.getString(i));
-                    System.out.println("Name " + jsonArray.getString(i));
                 }
 
                 //Convert the ID to an int.
                 id = Integer.parseInt(jsonString);
-
-                System.out.println("ID: " + id);
 
                 //Send the results to createList().
                 createList(results);
@@ -224,16 +206,13 @@ public class InteractiveSearcher extends LinearLayout{
 
     private void createList(final ArrayList<String> results) {
 
-        //int prev = Integer.parseInt(String.valueOf(previousid));
-        System.out.println("prev: " + previousid + " id: " + id);
+        //Attach the PopUpWindow to editText.
+        pw.showAsDropDown(editText);
 
-        if (id != previousid) {
+        //If the new id is not equal to the previous id
+        if(previousid != id ) {
 
-            System.out.println("search");
-
-            //Create a new ID for the current search
-           // id++;
-            //Empty the previous list to make room for new ones.
+            //Remove the list from old search
             listLayout.removeAllViews();
 
             for (int i = 0; i < results.size(); i++) {
@@ -253,15 +232,14 @@ public class InteractiveSearcher extends LinearLayout{
                 listLayout.setOrientation(LinearLayout.VERTICAL);
                 listLayout.addView(names);
 
+                //Previous id is equal to the new id
+                previousid = id;
+
                 //Attach the PopUpWindow to editText.
                 pw.showAsDropDown(editText);
 
             }
 
         }
-
-        previousid = id;
     }
 }
-
-
